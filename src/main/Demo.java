@@ -1,11 +1,6 @@
 package main;
 
 import game.Board;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import lpsolve.*;
 
 public class Demo {
@@ -13,8 +8,20 @@ public class Demo {
 	public Demo() {
 	}
 	
+	private int[] getTopLeftBoxCorner(int row, int col) {
+		int [] arr = new int[2];
+		return arr;
+	}
+	
 	private int getIndex(int row, int col, int value) {
 		return row * 9 * 9 + col * 9 + value;
+	}
+	
+	private int getValue(int variable) {
+		int row = variable / 81;
+		int col = (variable	- (row * 81)) / 9;
+		int value = variable - 81 * row - 9 * col;
+		return value + 1;
 	}
 
 	public int execute() throws LpSolveException {
@@ -122,13 +129,32 @@ public class Demo {
 		for(int row = 0; row < 9; row++) {
 			for(int col = 0; col < 9; col++) {
 				if(board.at(row,col) != 0) {
+					Cell cell = new Cell(row, col);
 					int value = board.at(row,col);
 					dataConstrainVariables[0] = getIndex(row, col, value);
 					lp.addConstraintex(1, dataConstrainCoeff, dataConstrainVariables, LpSolve.EQ, 1);
 					for(int val = 1; val < 10; val++) {
 						if(val != value) {
-							dataConstrainVariables[0] = getIndex(row, col, val);
-							lp.addConstraintex(1, dataConstrainCoeff, dataConstrainVariables, LpSolve.EQ, 0);
+							cell.setConstrain(val, 0, lp);
+						}
+					}
+					for(int index = 0; index < 9; index ++) {
+						if(row != index) {
+							Cell tempRowCell = new Cell(index, col);
+							tempRowCell.setConstrain(value, 0, lp);
+						}
+						if(col != index) {
+							Cell tempColCell = new Cell(row, index);
+							tempColCell.setConstrain(value, 0, lp);
+						}						
+					}
+					Cell topLeftBoxCorner = cell.getTopLeftBoxCorner();
+					for(int i = 0; i < 3; i ++) {
+						for(int j = 0; j < 3; j++) {
+							Cell boxCell = new Cell(topLeftBoxCorner.row + i, topLeftBoxCorner.col + j);
+							if(!(boxCell.row == cell.row && boxCell.col == cell.col)) {
+								boxCell.setConstrain(value, 0, lp);
+							}
 						}
 					}
 				}				
@@ -176,9 +202,16 @@ public class Demo {
 
 			/* variable values */
 			lp.getVariables(coefficients);
-			for (int j = 0; j < numVariables; j++)
+			String str = "";
+			for (int j = 0; j < numVariables; j++) {
 				System.out.println(lp.getColName(j + 1) + ": " + coefficients[j]);
-
+				if(coefficients[j] == 1) {
+					str += getValue(j);
+				}
+			}
+			System.out.println(str);
+			Board solution = new Board(str);
+			System.out.println(solution);
 			/* we are done now */
 		}
 
@@ -191,7 +224,11 @@ public class Demo {
 
 	public static void main(String[] args) {
 		try {
+			long startTime = System.currentTimeMillis();
 			new Demo().execute();
+			long endTime   = System.currentTimeMillis();
+			long totalTime = endTime - startTime;
+			System.out.println(totalTime);
 		} catch (LpSolveException e) {
 			e.printStackTrace();
 		}
