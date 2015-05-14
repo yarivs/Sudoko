@@ -11,7 +11,7 @@ public class Cell {
 		this.col = col;
 	}
 	
-	public Cell getTopLeftBoxCorner() {
+	public Cell getTopLeftBlockCorner() {
 		return new Cell((row / 3) * 3, (col / 3) * 3);
 	}
 	

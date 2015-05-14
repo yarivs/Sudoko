@@ -152,7 +152,7 @@ public class Demo {
 							tempColCell.setConstrain(value, 0, lp);
 						}						
 					}
-					Cell topLeftBoxCorner = cell.getTopLeftBoxCorner();
+					Cell topLeftBoxCorner = cell.getTopLeftBlockCorner();
 					for(int i = 0; i < 3; i ++) {
 						for(int j = 0; j < 3; j++) {
 							Cell boxCell = new Cell(topLeftBoxCorner.row + i, topLeftBoxCorner.col + j);
@@ -269,10 +269,116 @@ public class Demo {
 		return counter;
 	}	
 	
+	private void removeUnnecessaryVariables(int[][][] variablesBitMap, Board board) {
+		for(int row = 0; row < 9; row++) {
+			for(int col = 0; col < 9; col++) {
+				int value = board.at(row, col);
+				if(value != 0) {
+					//remove all this cell 9 variables (This cell is known).
+					for(int val = 0; val < 9; val++) {
+						variablesBitMap[row][col][val] = 0; 
+					}
+					//remove all this row 9 variables for value (also the same for col).
+					for(int index = 0; index < 9; index++) {
+						variablesBitMap[row][index][value-1] = 0;
+						variablesBitMap[index][col][value-1] = 0;
+					}
+					//remove all this block 9 variables for value.
+					Cell cell = new Cell(row, col);
+					Cell topLeftBlockCorner = cell.getTopLeftBlockCorner();
+					for(int i = 0; i < 3; i ++) {
+						for(int j = 0; j < 3; j++) {
+								variablesBitMap[topLeftBlockCorner.row + i][topLeftBlockCorner.col + j][value-1] = 0;
+							
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private void addConstrainFromList(LpSolve lp, List<Integer> constrainVariables) throws LpSolveException {
+		if(constrainVariables.size() > 0) {
+			double[] constrainCoeff = new double[constrainVariables.size()];
+			for(int i = 0; i < constrainVariables.size(); i++) {
+				constrainCoeff[i] = 1;
+			}
+			 
+			lp.addConstraintex(constrainVariables.size(), constrainCoeff, convertIntegers(constrainVariables), LpSolve.EQ, 1);
+		}
+	}
+	
+	private void addCellOneValueConstarin(LpSolve lp, int[][][] variablesBitMap) throws LpSolveException {
+		//each cell has one value
+		for(int row = 0; row < 9; row++) {
+			for(int col = 0; col < 9; col++) {
+				List<Integer> oneCellConstrainVariables = new ArrayList<>();
+				for(int value = 0; value < 9; value++) {
+					if(variablesBitMap[row][col][value] == 1) {
+						oneCellConstrainVariables.add(getRealIndex(row, col, value, variablesBitMap));
+					}
+				}				
+				addConstrainFromList(lp, oneCellConstrainVariables);
+			}
+		}
+	}
+
+	
+	private void addRowOneUniqueValueConstrain(LpSolve lp, int[][][] variablesBitMap) throws LpSolveException {
+		//rows
+		for(int row = 0; row < 9; row++) {
+			for(int value = 0; value < 9; value++) {
+				List<Integer> oneCellConstrainVariables = new ArrayList<>();
+				for(int col = 0; col < 9; col++) {
+					if(variablesBitMap[row][col][value] == 1) {
+						oneCellConstrainVariables.add(getRealIndex(row, col, value, variablesBitMap));
+					}
+				}
+				addConstrainFromList(lp, oneCellConstrainVariables);
+			}			
+		}
+	}
+	
+	private void addColOneUniqueValueConstrain(LpSolve lp, int[][][] variablesBitMap) throws LpSolveException {
+		//cols
+		for(int col = 0; col < 9; col++) {
+			for(int value = 0; value < 9; value++) {
+				List<Integer> oneCellConstrainVariables = new ArrayList<>();
+				for(int row = 0; row < 9; row++) {
+					if(variablesBitMap[row][col][value] == 1) {
+						oneCellConstrainVariables.add(getRealIndex(row, col, value, variablesBitMap));
+					}
+				}
+				addConstrainFromList(lp, oneCellConstrainVariables);
+			}			
+		}	
+	}
+	
+	private void addBlockOneUniqueValueConstrain(LpSolve lp, int[][][] variablesBitMap) throws LpSolveException {
+		//blocks
+		for(int i = 0; i < 3; i++) {
+			for(int j = 0; j < 3; j++) {
+				for(int value = 0; value < 9; value++) {
+					List<Integer> oneCellConstrainVariables = new ArrayList<>();
+					for(int k = 0; k < 3; k++) {
+						for(int l = 0; l < 3; l++) {
+							if(variablesBitMap[3*i + k][3*j + l][value] == 1) {
+								oneCellConstrainVariables.add(getRealIndex(3*i + k, 3*j + l, value, variablesBitMap));
+							}
+						}					
+					}
+					addConstrainFromList(lp, oneCellConstrainVariables);
+				}				
+			}
+		}
+	}
 	
 	public int execute2() throws LpSolveException {
 		LpSolve lp;
-		int[][][] variablesBitMap = new int[9][9][9];
+		
+		//Indicates which variables out of the 729 is used.
+		int[][][] variablesBitMap = new int[9][9][9];		
+		
 		for(int row = 0; row < 9; row++) {
 			for(int col = 0; col < 9; col++) {
 				for(int value = 0; value < 9; value++) {
@@ -287,35 +393,14 @@ public class Demo {
 				"000075400000000008080190000300001060000000034000068170204000603900000020530200000");
 		System.out.println(board);
 		
-		for(int row = 0; row < 9; row++) {
-			for(int col = 0; col < 9; col++) {
-				int value = board.at(row, col);
-				if(value != 0) {
-					for(int val = 0; val < 9; val++) {
-						variablesBitMap[row][col][val] = 0; //no need all that 9 variables.
-					}
-					for(int index = 0; index < 9; index++) {
-						variablesBitMap[row][index][value-1] = 0;
-						variablesBitMap[index][col][value-1] = 0;
-					}
-					Cell cell = new Cell(row, col);
-					Cell topLeftBlockCorner = cell.getTopLeftBoxCorner();
-					for(int i = 0; i < 3; i ++) {
-						for(int j = 0; j < 3; j++) {
-								variablesBitMap[topLeftBlockCorner.row + i][topLeftBlockCorner.col + j][value-1] = 0;
-							
-						}
-					}
-				}
-			}
-		}
+		removeUnnecessaryVariables(variablesBitMap, board);
 		
-		int realNumVariables = 0;
+		int numVariables = 0;
 		for(int row = 0; row < 9; row++) {
 			for(int col = 0; col < 9; col++) {
 				for(int value = 0; value < 9; value++) {
 					if(variablesBitMap[row][col][value] == 1) {
-						realNumVariables++;
+						numVariables++;
 					}
 				}
 			}
@@ -323,9 +408,9 @@ public class Demo {
 		
 
 		/* create space large enough for one row */
-		double[] coefficients = new double[realNumVariables];
+		double[] coefficients = new double[numVariables];
 
-		lp = LpSolve.makeLp(0, realNumVariables);
+		lp = LpSolve.makeLp(0, numVariables);
 		if (lp.getLp() == 0) {
 			System.out.println("couldn't construct a new model...");
 			return -1;
@@ -352,88 +437,13 @@ public class Demo {
 								 * makes building the model faster if it is done
 								 * rows by row
 								 */
-	
 		
-		//each cell has one value
-		for(int row = 0; row < 9; row++) {
-			for(int col = 0; col < 9; col++) {
-				List<Integer> oneCellConstrainVariables = new ArrayList<>();
-				for(int value = 0; value < 9; value++) {
-					if(variablesBitMap[row][col][value] == 1) {
-						oneCellConstrainVariables.add(getRealIndex(row, col, value, variablesBitMap));
-					}
-				}				
-				double[] oneCellConstrainCoeff = new double[oneCellConstrainVariables.size()];
-				for(int i = 0; i < oneCellConstrainVariables.size(); i++) {
-					oneCellConstrainCoeff[i] = 1;
-				}
-				if(oneCellConstrainVariables.size() > 0) {
-					lp.addConstraintex(oneCellConstrainVariables.size(), oneCellConstrainCoeff, convertIntegers(oneCellConstrainVariables), LpSolve.EQ, 1);
-				}
-			}
-		}
-		
-		
-		//rows
-		for(int row = 0; row < 9; row++) {
-			for(int value = 0; value < 9; value++) {
-				List<Integer> oneCellConstrainVariables = new ArrayList<>();
-				for(int col = 0; col < 9; col++) {
-					if(variablesBitMap[row][col][value] == 1) {
-						oneCellConstrainVariables.add(getRealIndex(row, col, value, variablesBitMap));
-					}
-				}
-				double[] oneCellConstrainCoeff = new double[oneCellConstrainVariables.size()];
-				for(int i = 0; i < oneCellConstrainVariables.size(); i++) {
-					oneCellConstrainCoeff[i] = 1;
-				}
-				if(oneCellConstrainVariables.size() > 0) {
-					lp.addConstraintex(oneCellConstrainVariables.size(), oneCellConstrainCoeff, convertIntegers(oneCellConstrainVariables), LpSolve.EQ, 1);
-				}
-			}			
-		}
-		
-		//cols
-		for(int col = 0; col < 9; col++) {
-			for(int value = 0; value < 9; value++) {
-				List<Integer> oneCellConstrainVariables = new ArrayList<>();
-				for(int row = 0; row < 9; row++) {
-					if(variablesBitMap[row][col][value] == 1) {
-						oneCellConstrainVariables.add(getRealIndex(row, col, value, variablesBitMap));
-					}
-				}
-				double[] oneCellConstrainCoeff = new double[oneCellConstrainVariables.size()];
-				for(int i = 0; i < oneCellConstrainVariables.size(); i++) {
-					oneCellConstrainCoeff[i] = 1;
-				}
-				if(oneCellConstrainVariables.size() > 0) {
-					lp.addConstraintex(oneCellConstrainVariables.size(), oneCellConstrainCoeff, convertIntegers(oneCellConstrainVariables), LpSolve.EQ, 1);
-				}
-			}			
-		}
-		
-		//boxes
-		for(int i = 0; i < 3; i++) {
-			for(int j = 0; j < 3; j++) {
-				for(int value = 0; value < 9; value++) {
-					List<Integer> oneCellConstrainVariables = new ArrayList<>();
-					for(int k = 0; k < 3; k++) {
-						for(int l = 0; l < 3; l++) {
-							if(variablesBitMap[3*i + k][3*j + l][value] == 1) {
-								oneCellConstrainVariables.add(getRealIndex(3*i + k, 3*j + l, value, variablesBitMap));
-							}
-						}					
-					}
-					double[] oneCellConstrainCoeff = new double[oneCellConstrainVariables.size()];
-					for(int m = 0; m < oneCellConstrainVariables.size(); m++) {
-						oneCellConstrainCoeff[m] = 1;
-					}
-					if(oneCellConstrainVariables.size() > 0) {
-						lp.addConstraintex(oneCellConstrainVariables.size(), oneCellConstrainCoeff, convertIntegers(oneCellConstrainVariables), LpSolve.EQ, 1);
-					}
-				}				
-			}
-		}
+
+		addCellOneValueConstarin(lp, variablesBitMap);
+		addRowOneUniqueValueConstrain(lp, variablesBitMap);
+		addColOneUniqueValueConstrain(lp, variablesBitMap);
+		addBlockOneUniqueValueConstrain(lp, variablesBitMap);	
+
 
 		lp.setAddRowmode(false); /*
 								 * rowmode should be turned off again when
@@ -476,7 +486,7 @@ public class Demo {
 			
 			int[][] solution = new int[9][9];
 			lp.getVariables(coefficients);
-			for (int j = 0; j < realNumVariables; j++) {
+			for (int j = 0; j < numVariables; j++) {
 				System.out.println(lp.getColName(j + 1) + ": " + coefficients[j]);
 				if(coefficients[j] == 1) {
 					int row = Character.getNumericValue(lp.getColName(j + 1).charAt(1));
@@ -511,7 +521,7 @@ public class Demo {
 	public static void main(String[] args) {
 		try {
 			long startTime = System.currentTimeMillis();
-			new Demo().execute();
+			new Demo().execute2();
 			long endTime   = System.currentTimeMillis();
 			long totalTime = endTime - startTime;
 			System.out.println(totalTime);
