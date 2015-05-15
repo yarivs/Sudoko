@@ -1,10 +1,12 @@
 package main;
 
+import game.Board;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import game.Board;
-import lpsolve.*;
+import lpsolve.LpSolve;
+import lpsolve.LpSolveException;
 
 public class Demo {
 
@@ -18,7 +20,7 @@ public class Demo {
 	
 	//here value is 1 to 9.
 	private int getIndex(int row, int col, int value) {
-		return row * 9 * 9 + col * 9 + value;
+		return row * Board.BOARD_WIDTH * Board.BOARD_WIDTH + col * Board.BOARD_WIDTH + value;
 	}
 	
 	private int getValue(int variable) {
@@ -28,7 +30,7 @@ public class Demo {
 		return value + 1;
 	}
 
-	public int execute() throws LpSolveException {
+	public String execute() throws LpSolveException {
 		LpSolve lp;
 		int numVariables = 729;
 		final int NUM_VALUES = 9;
@@ -50,7 +52,7 @@ public class Demo {
 		lp = LpSolve.makeLp(0, numVariables);
 		if (lp.getLp() == 0) {
 			System.out.println("couldn't construct a new model...");
-			return -1;
+			return "";
 		}
 
 		/*
@@ -61,12 +63,6 @@ public class Demo {
 			for(int col = 0; col < 9; col++) {
 				for(int value = 1; value < 10; value++) {
 					lp.setColName(getIndex(row, col, value), String.format("A%d%d%d", row, col, value));
-				}
-			}
-		}
-		for(int row = 0; row < 9; row++) {
-			for(int col = 0; col < 9; col++) {
-				for(int value = 1; value < 10; value++) {					
 					lp.setBinary(getIndex(row, col, value), true);
 				}
 			}
@@ -198,6 +194,7 @@ public class Demo {
 			ret = 5;
 		
 
+		String str = "";
 		if (ret == 0) {
 			/* a solution is calculated, now lets get some results */
 
@@ -206,7 +203,6 @@ public class Demo {
 
 			/* variable values */
 			lp.getVariables(coefficients);
-			String str = "";
 			for (int j = 0; j < numVariables; j++) {
 				System.out.println(lp.getColName(j + 1) + ": " + coefficients[j]);
 				if(coefficients[j] == 1) {
@@ -214,8 +210,8 @@ public class Demo {
 				}
 			}
 			System.out.println(str);
-			Board solution = new Board(str);
-			System.out.println(solution);
+//			Board solution = new Board(str);
+//			System.out.println(solution);
 			/* we are done now */
 		}
 
@@ -223,7 +219,7 @@ public class Demo {
 		if (lp.getLp() != 0)
 			lp.deleteLp();
 
-		return (ret);
+		return str;
 	}
 	
 	
@@ -373,8 +369,9 @@ public class Demo {
 		}
 	}
 	
-	public int execute2() throws LpSolveException {
+	public String execute2() throws LpSolveException {
 		LpSolve lp;
+		String str = "";
 		
 		//Indicates which variables out of the 729 is used.
 		int[][][] variablesBitMap = new int[9][9][9];		
@@ -413,7 +410,7 @@ public class Demo {
 		lp = LpSolve.makeLp(0, numVariables);
 		if (lp.getLp() == 0) {
 			System.out.println("couldn't construct a new model...");
-			return -1;
+			return "";
 		}
 
 		/*
@@ -476,6 +473,7 @@ public class Demo {
 			ret = 5;
 		
 
+		
 		if (ret == 0) {
 			/* a solution is calculated, now lets get some results */
 
@@ -496,7 +494,6 @@ public class Demo {
 				}
 			}
 			
-			String str = "";
 			for(int row = 0; row < 9; row++) {
 				for(int col = 0; col < 9; col++) {
 					if(solution[row][col] == 0) {
@@ -515,13 +512,13 @@ public class Demo {
 		if (lp.getLp() != 0)
 			lp.deleteLp();
 
-		return (ret);
+		return str;
 	}
 
 	public static void main(String[] args) {
 		try {
 			long startTime = System.currentTimeMillis();
-			new Demo().execute2();
+			new Demo().execute();
 			long endTime   = System.currentTimeMillis();
 			long totalTime = endTime - startTime;
 			System.out.println(totalTime);

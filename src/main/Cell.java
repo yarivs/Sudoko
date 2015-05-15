@@ -1,6 +1,7 @@
 package main;
 
-import lpsolve.*;
+import lpsolve.LpSolve;
+import lpsolve.LpSolveException;
 
 public class Cell {
 	public int row;
@@ -19,9 +20,9 @@ public class Cell {
 		return row * 9 * 9 + col * 9 + value;
 	}	
 	
-	public void setConstrain(int value, int equlas, LpSolve lp) throws LpSolveException {
+	public void setConstrain(int value, int equlasTo, LpSolve lp) throws LpSolveException {
 		int[] constarinVariable = {getIndex(value)};
 		double[] constarinCoeff = {1};
-		lp.addConstraintex(1, constarinCoeff, constarinVariable, LpSolve.EQ, equlas);
+		lp.addConstraintex(1, constarinCoeff, constarinVariable, LpSolve.EQ, equlasTo);
 	}
 }
