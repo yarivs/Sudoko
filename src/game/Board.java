@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public class Board {
 
 	public static final int BOARD_WIDTH = 9;
+	public static final int BLOCK_WIDTH = BOARD_WIDTH / 3;
 	public static final Byte NULL_VALUE = 0;
 	
 	public Board(String rprString) {
@@ -32,18 +33,18 @@ public class Board {
 
 	public List<List<Byte>> getBlocks() {
 		List<List<Byte>> blocks = new ArrayList<>(rows.size());
-		int blocksWidth = rows.size() / 3;
+		
 		for (int i = 0; i < rows.size(); i++) {
 			blocks.add(new ArrayList<>());
 		}
 		
 		for (int i = 0; i < rows.size(); i++) {
-			int blockI = i / blocksWidth;
+			int blockI = i / BLOCK_WIDTH;
 			for (int j = 0; j < rows.size(); j++) {
-				int blockJ = j / blocksWidth;
+				int blockJ = j / BLOCK_WIDTH;
 				
 				Byte cellValue = rows.get(i).get(j);
-				blocks.get(blocksWidth*blockI + blockJ).add(cellValue);
+				blocks.get(BLOCK_WIDTH * blockI + blockJ).add(cellValue);
 			}	
 		}
 		

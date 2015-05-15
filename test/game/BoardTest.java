@@ -28,9 +28,13 @@ public class BoardTest {
 	
 	@Test
 	public void testName() throws Exception {
-		Board b = new Board("001700509573024106800501002700295018009400305652800007465080071000159004908007053");
+//		Board b = new Board("001700509573024106800501002700295018009400305652800007465080071000159004908007053");
+		Board b = new Board("000075400000000008080190000300001060000000034000068170204000603900000020530200000");
 		b.getRows().forEach(col -> System.out.println(Arrays.toString(col.toArray())));
+		long start = System.currentTimeMillis();
 		boolean solve = BruteSolver.solve(b);
+		long end = System.currentTimeMillis();
+		System.out.println((end-start) / 1000.0);
 		
 		
 		System.out.println(solve);
