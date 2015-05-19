@@ -8,11 +8,7 @@ import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 import main.Cell;
 
-public class GenericSolver {
-
-	private LpSolve lpSolver;
-
-	private int constraint_index;
+public class GenericSolver extends SudokoSolver {
 
 	private double[] oneCoeff;
 	private double[] onesCoeffs;
@@ -20,11 +16,11 @@ public class GenericSolver {
 	private int[] dataConstrainVariables;
 
 	private final static int NUMBER_OF_VARIABLES = 729;
-	private static final int NUMBER_OF_DUDOKU_GENERIC_CONSTRAINTS = 81 * 4;
+	private static final int NUMBER_OF_SUDOKU_GENERIC_CONSTRAINTS = 81 * 4;
 	private static final int NUMBER_OF_BOARD_DEPENDENT_CONSTRAINTS = 25 * 9 + 25 * 24;
-	private final static int NUMBER_OF_CONSTRAINTS = NUMBER_OF_DUDOKU_GENERIC_CONSTRAINTS
+	private final static int NUMBER_OF_CONSTRAINTS = NUMBER_OF_SUDOKU_GENERIC_CONSTRAINTS
 			+ NUMBER_OF_BOARD_DEPENDENT_CONSTRAINTS;
-	private static final int FIRST_BOARD_DEPENTED_CONSTRAINT_ID = NUMBER_OF_CONSTRAINTS;
+	private static final int FIRST_BOARD_DEPENTED_CONSTRAINT_ID = NUMBER_OF_SUDOKU_GENERIC_CONSTRAINTS + 1;
 
 	/* --- Constructor --- */
 
@@ -72,7 +68,7 @@ public class GenericSolver {
 		onesCoeffs = new double[NUM_VALUES];
 		Arrays.fill(onesCoeffs, 1);
 
-		setupOneValueInEachCell(oneCellConstrainVariables);
+		uniqueNumberInEachCell(oneCellConstrainVariables);
 		uniqueNumberInEachRow(oneCellConstrainVariables);
 		uniqueNumberInEachCol(oneCellConstrainVariables);
 		uniqueNumberInEachBox(oneCellConstrainVariables);
@@ -81,12 +77,11 @@ public class GenericSolver {
 
 	public void setSudokoData(Board board) throws LpSolveException {
 		// 25 items
-		int constraintId = FIRST_BOARD_DEPENTED_CONSTRAINT_ID;
+		constraint_index = FIRST_BOARD_DEPENTED_CONSTRAINT_ID;
 		for (int row = 0; row < Board.BOARD_WIDTH; row++) {
 			for (int col = 0; col < Board.BOARD_WIDTH; col++) {
 				if (board.at(row, col) != Board.NULL_VALUE) {
-					assignKnownValue(board.at(row, col), constraintId, row, col);
-					constraintId++;
+					assignKnownValue(board.at(row, col), row, col);
 				}
 			}
 		}
@@ -103,7 +98,7 @@ public class GenericSolver {
 		int ret = lpSolver.solve();
 		if (ret != LpSolve.OPTIMAL) {
 			throw new IllegalArgumentException(
-					"The given sudoku is unsolveable.");
+					"The given sudoku is unsolveable");
 		}
 
 		StringBuilder str = new StringBuilder();
@@ -117,8 +112,8 @@ public class GenericSolver {
 			}
 		}
 		/* clean up such that all used memory by lpsolve is freed */
-		if (lpSolver.getLp() != 0)
-			lpSolver.deleteLp();
+//		if (lpSolver.getLp() != 0)
+//			lpSolver.deleteLp();
 
 		return str.toString();
 	}
@@ -133,12 +128,6 @@ public class GenericSolver {
 		}
 		initTargetFunction();
 		buildSudokuRulesConstraintes();
-	}
-
-	// here value is 1 to 9.
-	private int getVariableIndex(int row, int col, int value) {
-		return row * Board.BOARD_WIDTH * Board.BOARD_WIDTH + col
-				* Board.BOARD_WIDTH + value;
 	}
 
 	private int getValue(int variable) {
@@ -195,7 +184,7 @@ public class GenericSolver {
 		}
 	}
 
-	private void setupOneValueInEachCell(int[] oneCellConstrainVariables)
+	private void uniqueNumberInEachCell(int[] oneCellConstrainVariables)
 			throws LpSolveException {
 
 		for (int row = 0; row < Board.BOARD_WIDTH; row++) {
@@ -209,40 +198,11 @@ public class GenericSolver {
 		}
 	}
 
-	private void addConstraint(double[] oneCellConstrainCoeff,
-			int[] oneCellConstrainVariables) throws LpSolveException {
-		
-		addConstraint(constraint_index, oneCellConstrainCoeff,
-				oneCellConstrainVariables);
-		constraint_index++;
-	}
-
-	private void addConstraint(int rowId, double[] oneCellConstrainCoeff,
-			int[] oneCellConstrainVariables) throws LpSolveException {
-		
-		lpSolver.setRowex(rowId, oneCellConstrainVariables.length,
-				oneCellConstrainCoeff, oneCellConstrainVariables);
-		lpSolver.setRh(rowId, 1);
-		lpSolver.setConstrType(rowId, LpSolve.EQ);
-	}
-
-	private void initTargetFunction() throws LpSolveException {
-		double[] arbitraryObjectiveFunction = new double[1];
-		int[] arbitraryObjectiveFunction2 = new int[1];
-
-		/* set the objective in lpsolve */
-		lpSolver.setObjFnex(1, arbitraryObjectiveFunction,
-				arbitraryObjectiveFunction2);
-
-		/* set the object direction to maximize */
-		lpSolver.setMaxim();
-	}
-
-	private void assignKnownValue(byte value, int constraintId, int row, int col)
+	private void assignKnownValue(byte value, int row, int col)
 			throws LpSolveException {
 
 		Cell cell = new Cell(row, col);
-		assignKnownValueToCell(value, constraintId, row, col, cell);
+		assignKnownValueToCell(value, row, col, cell);
 		updateRowWithKnownCell(value, row, col);
 		updateColWithKnownCell(value, row, col);
 		updateBoxWithKnownCell(value, cell);
@@ -258,7 +218,8 @@ public class GenericSolver {
 				if (boxCell.row != cell.row && boxCell.col != cell.col) { // TODO
 																			// -
 																			// check
-					boxCell.setConstrain(value, 0, lpSolver);
+//					boxCell.setConstrain(value, 0, lpSolver);
+					addConstraint(getVariableIndex(boxCell.row, boxCell.col, value), 0);
 				}
 			}
 		}
@@ -268,8 +229,9 @@ public class GenericSolver {
 			throws LpSolveException {
 		for (int index = 0; index < 9; index++) {
 			if (col != index) {
-				Cell tempColCell = new Cell(row, index);
-				tempColCell.setConstrain(value, 0, lpSolver);
+//				Cell tempColCell = new Cell(row, index);
+//				tempColCell.setConstrain(value, 0, lpSolver);
+				addConstraint(getVariableIndex(row, index, value), 0);
 			}
 		}
 	}
@@ -278,21 +240,28 @@ public class GenericSolver {
 			throws LpSolveException {
 		for (int index = 0; index < 9; index++) {
 			if (row != index) {
-				Cell tempRowCell = new Cell(index, col);
-				tempRowCell.setConstrain(value, 0, lpSolver);
+//				Cell tempRowCell = new Cell(index, col);
+//				tempRowCell.setConstrain(value, 0, lpSolver);
+				addConstraint(getVariableIndex(index, col, value), 0);
 			}
 		}
 	}
 
-	private void assignKnownValueToCell(byte value, int constraintId, int row,
+	private void assignKnownValueToCell(byte value, int row,
 			int col, Cell cell) throws LpSolveException {
 		for (int val = 1; val < 10; val++) {
 			if (val != value) {
-				cell.setConstrain(val, 0, lpSolver);
+//				cell.setConstrain(val, 0, lpSolver);
+				addConstraint(cell.getIndex(val), 0);
 			} else {
 				dataConstrainVariables[0] = getVariableIndex(row, col, val);
-				addConstraint(constraintId, oneCoeff, dataConstrainVariables);
+				addConstraint(oneCoeff, dataConstrainVariables);
 			}
 		}
+	}
+
+	@Override
+	public boolean isVariableInUse(int row, int col, int value) {
+		return true;
 	}
 }
