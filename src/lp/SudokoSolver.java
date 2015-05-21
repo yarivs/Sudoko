@@ -130,11 +130,11 @@ public abstract class SudokoSolver {
 	}
 	
 	protected void initTargetFunction() throws LpSolveException {
-		double[] arbitraryObjectiveFunction = new double[1];
+		double[] zeroCoef = new double[] {0};
 		int[] arbitraryObjectiveFunction2 = new int[1];
 
 		/* set the objective in lpsolve */
-		lpSolver.setObjFnex(1, arbitraryObjectiveFunction,
+		lpSolver.setObjFnex(1, zeroCoef,
 				arbitraryObjectiveFunction2);
 
 		/* set the object direction to maximize */

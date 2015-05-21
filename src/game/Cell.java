@@ -1,4 +1,4 @@
-package main;
+package game;
 
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
@@ -16,7 +16,7 @@ public class Cell {
 		return new Cell((row / 3) * 3, (col / 3) * 3);
 	}
 	
-	private int getIndex(int value) {
+	public int getIndex(int value) {
 		return row * 9 * 9 + col * 9 + value;
 	}	
 	

@@ -21,7 +21,7 @@ public class Board {
 	private ArrayList<Set<Byte>> initSets() {
 		ArrayList<Set<Byte>> sets = new ArrayList<>();
 		for (int i = 0; i < BOARD_WIDTH; i++) {
-			sets.add(new HashSet<>());
+			sets.add(new HashSet<Byte>());
 		}
 		return sets;
 	}
@@ -41,8 +41,13 @@ public class Board {
 	public void setCell(int i, int j, byte value) {
 		byte oldValue = at(i, j);
 		rows.get(i).set(j, value);
+		
+		cols.get(j).remove(oldValue);
 		cols.get(j).add(value);
+		
+		boxes.get(toBoxIndex(i, j)).remove(oldValue);
 		boxes.get(toBoxIndex(i, j)).add(value);
+		
 		if (value == 0 && oldValue != 0) {
 			leftToSet++;
 		} else if (value != 0 && oldValue == 0) {
@@ -114,5 +119,5 @@ public class Board {
 	private List<Set<Byte>> cols;
 	private List<Set<Byte>> boxes;
 	
-	private int leftToSet = BOARD_WIDTH * BOARD_WIDTH;
+	public int leftToSet = BOARD_WIDTH * BOARD_WIDTH;
 }

@@ -1,12 +1,12 @@
 package lp;
 
 import game.Board;
+import game.Cell;
 
 import java.util.Arrays;
 
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
-import main.Cell;
 
 public class GenericSolver extends SudokoSolver {
 

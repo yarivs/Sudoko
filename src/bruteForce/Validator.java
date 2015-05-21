@@ -1,10 +1,9 @@
 package bruteForce;
 
+import game.Board;
+
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-
-import game.Board;
 
 public class Validator {
 
@@ -27,8 +26,8 @@ public class Validator {
 		if (sector.contains(Board.NULL_VALUE)) {
 			return false;
 		}
-		long count = sector.parallelStream().distinct().count();
-		if (count != sector.size()) {
+		long count = sector.stream().distinct().count();
+		if (count != sector.size() || count != Board.BOARD_WIDTH) {
 			return false;
 		}
 

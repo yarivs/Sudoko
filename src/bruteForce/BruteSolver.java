@@ -11,8 +11,6 @@ import java.util.Set;
  */
 public class BruteSolver {
 
-	public static long possibilitties = 1;
-	
 	/**
 	 * Solves sudoku board. Sets the solution in-place.
 	 * 
@@ -35,7 +33,6 @@ public class BruteSolver {
 
 					for (Byte k : possibilities) {
 						b.setCell(i, j, (byte) k);
-						possibilitties += 1;
 						if (solve(b)) {
 							return true;
 						}

@@ -1,9 +1,13 @@
 package lp;
 
 import game.Board;
+import game.Cell;
+
+import java.util.List;
+
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
-import main.Cell;
+import bruteForce.BruteSolver;
 
 public class SpecificSolver extends SudokoSolver {
 
@@ -17,22 +21,34 @@ public class SpecificSolver extends SudokoSolver {
 	public SpecificSolver(Board board) {
 		variables = new boolean[Board.BOARD_WIDTH][Board.BOARD_WIDTH][Board.BOARD_WIDTH];
 		this.board = board;
+		initVariablesMap();
+		deduceValues();
 		try {
 			initConstraints();
 		} catch (LpSolveException e) {
 			e.printStackTrace();
 		}
 	}
-
-	public void initConstraints() throws LpSolveException {
-
-		for (int row = 0; row < 9; row++) {
-			for (int col = 0; col < 9; col++) {
-				for (int value = 0; value < 9; value++) {
-					variables[row][col][value] = true;
+	
+	private void deduceValues() {
+		boolean deduced = true;
+		while (deduced) {
+			deduced = false;
+			for (int i = 0; i < board.dimention(); i++) {
+				for (int j = 0; j < board.dimention(); j++) {
+					if (board.at(i, j) == Board.NULL_VALUE) {
+						List<Byte> possibilities = BruteSolver.getPossibilities(board, i, j);
+						if (possibilities.size() == 1) {
+							board.setCell(i, j, possibilities.get(0));
+							deduced = true;
+						}
+					}
 				}
 			}
 		}
+	}
+
+	public void initConstraints() throws LpSolveException {
 
 		removeUnnecessaryVariables();
 		numVariables = countVariables();
@@ -86,6 +102,16 @@ public class SpecificSolver extends SudokoSolver {
 
 		/* I only want to see important messages on screen while solving */
 		lpSolver.setVerbose(LpSolve.IMPORTANT);
+	}
+
+	private void initVariablesMap() {
+		for (int row = 0; row < 9; row++) {
+			for (int col = 0; col < 9; col++) {
+				for (int value = 0; value < 9; value++) {
+					variables[row][col][value] = true;
+				}
+			}
+		}
 	}
 
 	public String solve() throws LpSolveException {
