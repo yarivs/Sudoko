@@ -53,6 +53,10 @@ public class SpecificSolver extends SudokoSolver {
 		removeUnnecessaryVariables();
 		numVariables = countVariables();
 
+		if (numVariables == 0) {
+			return;
+		}
+		
 		lpSolver = LpSolve.makeLp(0, numVariables);
 		if (lpSolver.getLp() == 0) {
 			System.out.println("couldn't construct a new model...");
@@ -115,6 +119,10 @@ public class SpecificSolver extends SudokoSolver {
 	}
 
 	public String solve() throws LpSolveException {
+		if (numVariables == 0) {
+			return board.toString();
+		}
+		
 		int ret;
 		/* Now let lpsolve calculate a solution */
 		ret = lpSolver.solve();
@@ -157,7 +165,6 @@ public class SpecificSolver extends SudokoSolver {
 		if (lpSolver.getLp() != 0) {
 			lpSolver.deleteLp();
 		}
-
 		return str.toString();
 	}
 

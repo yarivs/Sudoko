@@ -20,14 +20,14 @@ public class Main {
 
 	public static void main(String[] args) throws IOException, LpSolveException {
 
-//		validateFile("resources/5_brute_solved.txt");
-//		String fromPath = "resources/5.txt";
-//		List<String> sudokus = Files.readAllLines(Paths.get(fromPath),
-//				Charset.defaultCharset());
-//		
+//		validateFile("resources/5_specific_solved.txt");
+		String fromPath = "resources/5.txt";
+		List<String> sudokus = Files.readAllLines(Paths.get(fromPath),
+				Charset.defaultCharset());
+		
 //		solveBrutally(sudokus);
 //		solveSpecificlly(sudokus);
-//		solveGenerally(sudokus);
+		solveGenerally(sudokus);
 	}
 
 	private static void solveGenerally(List<String> sudokus)

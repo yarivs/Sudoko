@@ -1,0 +1,10 @@
+src\bruteForce\BruteSolver.java
+src\game\Board.java
+src\game\Cell.java
+src\lp\GenericSolver.java
+src\lp\SpecificSolver.java
+src\lp\SudokoSolver.java
+src\main\BruteForce.java
+src\main\CustomModel.java
+src\main\GenericModel.java
+src\utils\Parser.java
